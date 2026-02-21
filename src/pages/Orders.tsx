@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ShoppingCart, ClipboardList } from "lucide-react";
 import MenuGrid from "@/components/orders/MenuGrid";
 import CartPanel from "@/components/orders/CartPanel";
 import OrderTypeBar from "@/components/orders/OrderTypeBar";
 import PizzaCustomizeDialog from "@/components/orders/PizzaCustomizeDialog";
+import ActiveOrdersList from "@/components/orders/ActiveOrdersList";
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder } from "@/hooks/useOrders";
 import type { Database } from "@/integrations/supabase/types";
@@ -16,7 +19,8 @@ export default function Orders() {
   const [orderType, setOrderType] = useState<OrderType>("dine_in");
   const [tableNumber, setTableNumber] = useState<number | null>(1);
   const [pizzaItem, setPizzaItem] = useState<any>(null);
-  const taxPercent = 20; // from business settings
+  const [activeTab, setActiveTab] = useState("new");
+  const taxPercent = 20;
 
   const handleSelectItem = (item: any) => {
     if (item.is_pizza) {
@@ -70,42 +74,57 @@ export default function Orders() {
       });
       toast.success(`Order #${order.order_number} created!`);
       cart.clearCart();
+      setActiveTab("active");
     } catch (err: any) {
       toast.error(err.message || "Failed to create order");
     }
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)] md:h-[calc(100vh-3rem)] gap-4">
-      <OrderTypeBar
-        orderType={orderType}
-        tableNumber={tableNumber}
-        onOrderTypeChange={setOrderType}
-        onTableNumberChange={setTableNumber}
-      />
+    <div className="flex flex-col h-[calc(100vh-5rem)] md:h-[calc(100vh-3rem)]">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+        <TabsList className="w-fit mb-4">
+          <TabsTrigger value="new" className="gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            New Order
+          </TabsTrigger>
+          <TabsTrigger value="active" className="gap-2">
+            <ClipboardList className="h-4 w-4" />
+            Active Orders
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="flex-1 flex gap-4 min-h-0">
-        {/* Menu grid */}
-        <div className="flex-1 min-w-0">
-          <MenuGrid onSelectItem={handleSelectItem} />
-        </div>
-
-        {/* Cart panel */}
-        <div className="w-80 flex-shrink-0 hidden md:flex">
-          <CartPanel
-            items={cart.items}
-            subtotal={cart.subtotal}
-            taxPercent={taxPercent}
-            discountAmount={0}
-            onUpdateQuantity={cart.updateQuantity}
-            onRemove={cart.removeItem}
-            onPlaceOrder={handlePlaceOrder}
-            isSubmitting={createOrder.isPending}
+        <TabsContent value="new" className="flex-1 flex flex-col gap-4 mt-0 min-h-0">
+          <OrderTypeBar
+            orderType={orderType}
+            tableNumber={tableNumber}
+            onOrderTypeChange={setOrderType}
+            onTableNumberChange={setTableNumber}
           />
-        </div>
-      </div>
+          <div className="flex-1 flex gap-4 min-h-0">
+            <div className="flex-1 min-w-0">
+              <MenuGrid onSelectItem={handleSelectItem} />
+            </div>
+            <div className="w-80 flex-shrink-0 hidden md:flex">
+              <CartPanel
+                items={cart.items}
+                subtotal={cart.subtotal}
+                taxPercent={taxPercent}
+                discountAmount={0}
+                onUpdateQuantity={cart.updateQuantity}
+                onRemove={cart.removeItem}
+                onPlaceOrder={handlePlaceOrder}
+                isSubmitting={createOrder.isPending}
+              />
+            </div>
+          </div>
+        </TabsContent>
 
-      {/* Pizza customization dialog */}
+        <TabsContent value="active" className="flex-1 overflow-auto mt-0">
+          <ActiveOrdersList />
+        </TabsContent>
+      </Tabs>
+
       <PizzaCustomizeDialog
         open={!!pizzaItem}
         onOpenChange={(open) => !open && setPizzaItem(null)}
