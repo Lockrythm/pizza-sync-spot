@@ -21,20 +21,29 @@ export default function Login() {
   useEffect(() => {
     const checkSetup = async () => {
       try {
+        console.log("[Login] Checking setup-admin...");
         const res = await supabase.functions.invoke("setup-admin", {
           body: { action: "check" },
         });
-        if (res.data?.admin_exists) {
+        console.log("[Login] setup-admin response:", res);
+        if (res.error) {
+          console.error("[Login] setup-admin error:", res.error);
+          setIsSetup(true); // Default to login on error
+        } else if (res.data?.admin_exists) {
           setIsSetup(true);
         } else {
           setIsSetup(false);
         }
-      } catch {
+      } catch (err) {
+        console.error("[Login] setup-admin catch:", err);
         setIsSetup(true); // Default to login
       }
     };
     checkSetup();
   }, []);
+
+  // If already logged in, redirect immediately without waiting for setup check
+  if (!authLoading && session) return <Navigate to="/" replace />;
 
   if (authLoading || isSetup === null) {
     return (
@@ -43,8 +52,6 @@ export default function Login() {
       </div>
     );
   }
-
-  if (session) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
