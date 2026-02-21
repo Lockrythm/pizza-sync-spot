@@ -11,6 +11,7 @@ import PaymentDialog from "./PaymentDialog";
 import ReceiptDialog from "./ReceiptDialog";
 import { formatDistanceToNow, format } from "date-fns";
 import { toast } from "sonner";
+import { autoPrint } from "@/lib/printReceipt";
 import type { Database } from "@/integrations/supabase/types";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
@@ -61,8 +62,8 @@ export default function ActiveOrdersList() {
       });
       setPaymentOrder(null);
 
-      // Show receipt
-      setReceiptData({
+      // Build receipt data
+      const receiptPayload = {
         businessName: settings.business_name ?? "LiveSync Pizza",
         address: settings.address ?? "",
         contact: settings.contact ?? "",
@@ -70,12 +71,12 @@ export default function ActiveOrdersList() {
         orderType: order.order_type,
         tableNumber: order.table_number,
         date: format(new Date(), "dd/MM/yyyy HH:mm"),
-        items: order.items.map((item) => ({
+        items: order.items.map((item: any) => ({
           name: item.menu_item?.name ?? "Item",
           quantity: item.quantity,
           size: item.size,
           crustName: item.crust?.name ?? null,
-          addons: item.addons.map((a) => a.name),
+          addons: item.addons.map((a: any) => a.name),
           unitPrice: item.unit_price,
           lineTotal: item.unit_price * item.quantity,
         })),
@@ -85,8 +86,15 @@ export default function ActiveOrdersList() {
         discountAmount: discount,
         total,
         paymentMethod: method,
-      });
+      };
+
+      // Show receipt dialog
+      setReceiptData(receiptPayload);
       setReceiptType("customer");
+
+      // Auto-print customer receipt
+      autoPrint(receiptPayload, "customer");
+
       toast.success(`Order #${order.order_number} completed!`);
     } catch (err: any) {
       toast.error(err.message || "Payment failed");
