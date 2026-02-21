@@ -9,6 +9,9 @@ import PizzaCustomizeDialog from "@/components/orders/PizzaCustomizeDialog";
 import ActiveOrdersList from "@/components/orders/ActiveOrdersList";
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder } from "@/hooks/useOrders";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
+import { autoPrint } from "@/lib/printReceipt";
+import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
 type OrderType = Database["public"]["Enums"]["order_type"];
@@ -16,6 +19,7 @@ type OrderType = Database["public"]["Enums"]["order_type"];
 export default function Orders() {
   const cart = useCart();
   const createOrder = useCreateOrder();
+  const { data: settings = {} } = useBusinessSettings();
   const [orderType, setOrderType] = useState<OrderType>("dine_in");
   const [tableNumber, setTableNumber] = useState<number | null>(1);
   const [pizzaItem, setPizzaItem] = useState<any>(null);
@@ -73,6 +77,33 @@ export default function Orders() {
         discountAmount: 0,
       });
       toast.success(`Order #${order.order_number} created!`);
+
+      // Auto-print kitchen slip
+      autoPrint({
+        businessName: settings.business_name ?? "LiveSync Pizza",
+        address: settings.address ?? "",
+        contact: settings.contact ?? "",
+        orderNumber: order.order_number,
+        orderType,
+        tableNumber: orderType === "dine_in" ? tableNumber : null,
+        date: format(new Date(), "dd/MM/yyyy HH:mm"),
+        items: cart.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          size: item.size,
+          crustName: item.crustName,
+          addons: item.addons.map((a) => a.name),
+          unitPrice: item.unitPrice,
+          lineTotal: (item.unitPrice + item.crustExtra + item.addons.reduce((a, ad) => a + ad.price, 0)) * item.quantity,
+        })),
+        subtotal: 0,
+        taxPercent: 0,
+        taxAmount: 0,
+        discountAmount: 0,
+        total: 0,
+        paymentMethod: "",
+      }, "kitchen");
+
       cart.clearCart();
       setActiveTab("active");
     } catch (err: any) {
