@@ -33,59 +33,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Listener for ONGOING auth changes (does NOT control loading)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         if (!mounted) return;
         console.log("[Auth] onAuthStateChange:", _event, !!session);
         setSession(session);
         setUser(session?.user ?? null);
+
         if (session?.user) {
-          try {
-            const userRole = await fetchRole(session.user.id);
-            if (mounted) setRole(userRole);
-          } catch (err) {
-            console.error("[Auth] fetchRole error:", err);
-            if (mounted) setRole(null);
-          }
+          // Use setTimeout to avoid Supabase auth deadlock
+          setTimeout(() => {
+            if (!mounted) return;
+            fetchRole(session.user.id).then((r) => {
+              if (mounted) setRole(r);
+            }).catch(() => {
+              if (mounted) setRole(null);
+            });
+          }, 0);
         } else {
           setRole(null);
         }
-        if (mounted) setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-      console.log("[Auth] getSession:", !!session);
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        try {
+    // INITIAL load — controls loading state
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted) return;
+        console.log("[Auth] getSession:", !!session);
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
           const userRole = await fetchRole(session.user.id);
           if (mounted) setRole(userRole);
-        } catch (err) {
-          console.error("[Auth] fetchRole error:", err);
-          if (mounted) setRole(null);
         }
+      } catch (err) {
+        console.error("[Auth] initializeAuth error:", err);
+      } finally {
+        if (mounted) setLoading(false);
       }
-      if (mounted) setLoading(false);
-    }).catch((err) => {
-      console.error("[Auth] getSession error:", err);
-      if (mounted) setLoading(false);
-    });
+    };
 
-    // Safety timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn("[Auth] Timeout - forcing loading=false");
-        setLoading(false);
-      }
-    }, 5000);
+    initializeAuth();
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      clearTimeout(timeout);
     };
   }, []);
 
