@@ -43,14 +43,14 @@ export default function OrderHistory() {
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-3 flex flex-wrap gap-3 items-end">
+        <CardContent className="p-3 grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-end">
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">From</label>
-            <Input type="date" className="w-36" onChange={(e) => updateFilter("from", e.target.value)} />
+            <Input type="date" className="w-full sm:w-36" onChange={(e) => updateFilter("from", e.target.value)} />
           </div>
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">To</label>
-            <Input type="date" className="w-36" onChange={(e) => updateFilter("to", e.target.value)} />
+            <Input type="date" className="w-full sm:w-36" onChange={(e) => updateFilter("to", e.target.value)} />
           </div>
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Order #</label>
@@ -89,16 +89,16 @@ export default function OrderHistory() {
 
       {/* Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Order #</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead className="hidden sm:table-cell">Date</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
-                {role === "admin" && <TableHead>Payment</TableHead>}
-                {role === "admin" && <TableHead className="text-right">Total</TableHead>}
+                {role === "admin" && <TableHead className="hidden md:table-cell">Payment</TableHead>}
+                {role === "admin" && <TableHead className="text-right hidden sm:table-cell">Total</TableHead>}
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -111,17 +111,17 @@ export default function OrderHistory() {
                 orders.map((order: any) => (
                   <TableRow key={order.id} className="cursor-pointer" onClick={() => setSelectedOrder(order)}>
                     <TableCell className="font-medium">#{order.order_number}</TableCell>
-                    <TableCell>{format(new Date(order.created_at), "dd MMM yyyy HH:mm")}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{format(new Date(order.created_at), "dd MMM yyyy HH:mm")}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{order.order_type.replace("_", " ")}</Badge>
+                      <Badge variant="outline" className="text-xs">{order.order_type.replace("_", " ")}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={order.status === "completed" ? "default" : "destructive"}>
+                      <Badge variant={order.status === "completed" ? "default" : "destructive"} className="text-xs">
                         {order.status}
                       </Badge>
                     </TableCell>
-                    {role === "admin" && <TableCell>{order.payment_method ?? "—"}</TableCell>}
-                    {role === "admin" && <TableCell className="text-right font-medium">£{Number(order.total).toFixed(2)}</TableCell>}
+                    {role === "admin" && <TableCell className="hidden md:table-cell">{order.payment_method ?? "—"}</TableCell>}
+                    {role === "admin" && <TableCell className="text-right font-medium hidden sm:table-cell">£{Number(order.total).toFixed(2)}</TableCell>}
                     <TableCell>
                       <Button variant="ghost" size="sm"><Search className="h-4 w-4" /></Button>
                     </TableCell>

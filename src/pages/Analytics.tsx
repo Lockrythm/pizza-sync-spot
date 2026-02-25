@@ -29,24 +29,26 @@ export default function Analytics() {
   return (
     <div className="p-4 space-y-4 overflow-auto h-full">
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
         <h1 className="text-xl font-bold text-foreground mr-auto">Analytics Dashboard</h1>
-        <Input
-          type="date"
-          className="w-40"
-          value={format(from, "yyyy-MM-dd")}
-          onChange={(e) => e.target.value && setFrom(new Date(e.target.value))}
-        />
-        <span className="text-muted-foreground">to</span>
-        <Input
-          type="date"
-          className="w-40"
-          value={format(to, "yyyy-MM-dd")}
-          onChange={(e) => e.target.value && setTo(new Date(e.target.value))}
-        />
-        <Button variant="outline" size="sm" onClick={() => exportCSV(data.orders)}>
-          <Download className="h-4 w-4 mr-1" /> CSV
-        </Button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Input
+            type="date"
+            className="w-full sm:w-40"
+            value={format(from, "yyyy-MM-dd")}
+            onChange={(e) => e.target.value && setFrom(new Date(e.target.value))}
+          />
+          <span className="text-muted-foreground">to</span>
+          <Input
+            type="date"
+            className="w-full sm:w-40"
+            value={format(to, "yyyy-MM-dd")}
+            onChange={(e) => e.target.value && setTo(new Date(e.target.value))}
+          />
+          <Button variant="outline" size="sm" onClick={() => exportCSV(data.orders)}>
+            <Download className="h-4 w-4 mr-1" /> CSV
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}

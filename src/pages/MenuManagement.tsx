@@ -130,15 +130,15 @@ export default function MenuManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Menu Management</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Menu Management</h1>
           <p className="text-muted-foreground text-sm">{menuItems.length} items across {categories.length} categories</p>
         </div>
       </div>
 
       <Tabs defaultValue="items" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="items">Menu Items</TabsTrigger>
           <TabsTrigger value="crusts">Crusts</TabsTrigger>
           <TabsTrigger value="addons">Add-ons</TabsTrigger>
@@ -182,7 +182,7 @@ export default function MenuManagement() {
           </div>
 
           <Card>
-            <CardContent className="p-0">
+            <CardContent className="p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>

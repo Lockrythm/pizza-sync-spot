@@ -117,15 +117,15 @@ export default function ActiveOrdersList() {
       ) : (
         orders.map((order) => (
           <Card key={order.id}>
-            <CardHeader className="pb-2 px-4 pt-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+            <CardHeader className="pb-2 px-3 sm:px-4 pt-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-lg font-bold">#{order.order_number}</span>
                   <Badge className={statusColors[order.status] ?? ""}>
                     {order.status}
                   </Badge>
-                  <Badge variant="outline">{orderTypeLabels[order.order_type]}</Badge>
-                  {order.table_number && <Badge variant="secondary">Table {order.table_number}</Badge>}
+                  <Badge variant="outline" className="text-xs">{orderTypeLabels[order.order_type]}</Badge>
+                  {order.table_number && <Badge variant="secondary" className="text-xs">Table {order.table_number}</Badge>}
                 </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
@@ -133,7 +133,7 @@ export default function ActiveOrdersList() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="px-4 pb-3">
+            <CardContent className="px-3 sm:px-4 pb-3">
               <div className="space-y-1 text-sm mb-3">
                 {order.items.map((item) => (
                   <div key={item.id} className="flex justify-between">
@@ -148,7 +148,7 @@ export default function ActiveOrdersList() {
                 ))}
               </div>
               <Separator className="mb-3" />
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <span className="font-bold text-lg">£{Number(order.total).toFixed(2)}</span>
                 <div className="flex gap-2">
                   <Button
