@@ -2,6 +2,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShoppingCart, ClipboardList } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import MenuGrid from "@/components/orders/MenuGrid";
 import CartPanel from "@/components/orders/CartPanel";
 import OrderTypeBar from "@/components/orders/OrderTypeBar";
@@ -148,6 +151,35 @@ export default function Orders() {
                 isSubmitting={createOrder.isPending}
               />
             </div>
+          </div>
+
+          {/* Mobile floating cart button */}
+          <div className="md:hidden fixed bottom-4 right-4 z-40">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button size="lg" className="rounded-full h-14 w-14 shadow-lg relative">
+                  <ShoppingCart className="h-6 w-6" />
+                  {cart.items.length > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                      {cart.items.length}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[75vh] p-0 rounded-t-xl">
+                <SheetTitle className="sr-only">Cart</SheetTitle>
+                <CartPanel
+                  items={cart.items}
+                  subtotal={cart.subtotal}
+                  taxPercent={taxPercent}
+                  discountAmount={0}
+                  onUpdateQuantity={cart.updateQuantity}
+                  onRemove={cart.removeItem}
+                  onPlaceOrder={handlePlaceOrder}
+                  isSubmitting={createOrder.isPending}
+                />
+              </SheetContent>
+            </Sheet>
           </div>
         </TabsContent>
 

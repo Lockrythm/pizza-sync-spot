@@ -66,7 +66,7 @@ export default function Kitchen() {
         </Badge>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-h-0 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-h-0 overflow-auto md:overflow-hidden">
         {columns.map((col) => (
           <div key={col.status} className="flex flex-col min-h-0">
             <div className="flex items-center gap-2 mb-3">
