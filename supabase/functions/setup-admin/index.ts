@@ -26,7 +26,7 @@ serve(async (req) => {
       .eq("role", "admin")
       .limit(1);
 
-    const adminExists = existingRoles && existingRoles.length > 0;
+    const adminExists = Array.isArray(existingRoles) && existingRoles.length > 0;
 
     if (action === "check") {
       return new Response(
