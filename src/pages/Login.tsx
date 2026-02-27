@@ -29,10 +29,10 @@ export default function Login() {
         if (res.error) {
           console.error("[Login] setup-admin error:", res.error);
           setIsSetup(true); // Default to login on error
-        } else if (res.data?.admin_exists) {
-          setIsSetup(true);
+        } else if (res.data?.admin_exists === false) {
+          setIsSetup(false); // Only show setup if explicitly false
         } else {
-          setIsSetup(false);
+          setIsSetup(true); // Default to login (covers true and null)
         }
       } catch (err) {
         console.error("[Login] setup-admin catch:", err);

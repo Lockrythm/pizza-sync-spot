@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/hooks/useNotifications";
 import Login from "./pages/Login";
 import AppLayout from "./components/AppLayout";
 import Orders from "./pages/Orders";
@@ -19,6 +20,7 @@ const queryClient = new QueryClient();
 
 function RoleRedirect() {
   const { role } = useAuth();
+  useNotifications();
   if (role === "chef") return <Navigate to="/kitchen" replace />;
   return <Navigate to="/orders" replace />;
 }
