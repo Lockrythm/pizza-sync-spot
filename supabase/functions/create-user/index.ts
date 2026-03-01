@@ -47,8 +47,57 @@ serve(async (req) => {
       });
     }
 
-    const { email, password, display_name, role } = await req.json();
+    const body = await req.json();
+    const { action, email, password, display_name, role, user_id, new_role } = body;
 
+    // DELETE USER
+    if (action === "delete" && user_id) {
+      // Prevent self-deletion
+      if (user_id === caller.id) {
+        return new Response(JSON.stringify({ error: "Cannot delete your own account" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
+      if (deleteError) {
+        return new Response(JSON.stringify({ error: deleteError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Clean up role and profile (cascade should handle this but be safe)
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
+      await supabaseAdmin.from("profiles").delete().eq("user_id", user_id);
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // UPDATE ROLE
+    if (action === "update_role" && user_id && new_role) {
+      const { error: upsertError } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id, role: new_role }, { onConflict: "user_id" });
+
+      if (upsertError) {
+        return new Response(JSON.stringify({ error: upsertError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // CREATE USER (default action)
     if (!email || !password || !role) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
@@ -56,7 +105,6 @@ serve(async (req) => {
       });
     }
 
-    // Create user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -71,7 +119,6 @@ serve(async (req) => {
       });
     }
 
-    // Assign role
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: newUser.user.id, role });

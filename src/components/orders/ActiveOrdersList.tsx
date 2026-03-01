@@ -62,7 +62,6 @@ export default function ActiveOrdersList() {
       });
       setPaymentOrder(null);
 
-      // Build receipt data
       const receiptPayload = {
         businessName: settings.business_name ?? "LiveSync Pizza",
         address: settings.address ?? "",
@@ -88,13 +87,9 @@ export default function ActiveOrdersList() {
         paymentMethod: method,
       };
 
-      // Show receipt dialog
       setReceiptData(receiptPayload);
       setReceiptType("customer");
-
-      // Auto-print customer receipt
       autoPrint(receiptPayload, "customer");
-
       toast.success(`Order #${order.order_number} completed!`);
     } catch (err: any) {
       toast.error(err.message || "Payment failed");
@@ -115,63 +110,67 @@ export default function ActiveOrdersList() {
       {orders.length === 0 ? (
         <p className="text-center text-muted-foreground py-12 text-sm">No active orders</p>
       ) : (
-        orders.map((order) => (
-          <Card key={order.id}>
-            <CardHeader className="pb-2 px-3 sm:px-4 pt-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-lg font-bold">#{order.order_number}</span>
-                  <Badge className={statusColors[order.status] ?? ""}>
-                    {order.status}
-                  </Badge>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {orders.map((order) => (
+            <Card key={order.id} className="flex flex-col">
+              <CardHeader className="pb-2 px-3 sm:px-4 pt-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-lg font-bold">#{order.order_number}</span>
+                    <Badge className={statusColors[order.status] ?? ""}>
+                      {order.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                    <Clock className="h-3 w-3" />
+                    {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+                  </div>
+                </div>
+                <div className="flex gap-1.5 flex-wrap mt-1">
                   <Badge variant="outline" className="text-xs">{orderTypeLabels[order.order_type]}</Badge>
                   {order.table_number && <Badge variant="secondary" className="text-xs">Table {order.table_number}</Badge>}
                 </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+              </CardHeader>
+              <CardContent className="px-3 sm:px-4 pb-3 flex-1 flex flex-col">
+                <div className="space-y-1 text-sm mb-3 flex-1">
+                  {order.items.map((item) => (
+                    <div key={item.id} className="flex justify-between gap-2">
+                      <span className="truncate">
+                        {item.quantity}× {item.menu_item?.name}
+                        {item.size ? ` (${item.size})` : ""}
+                      </span>
+                      <span className="text-muted-foreground shrink-0">
+                        £{(item.unit_price * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="px-3 sm:px-4 pb-3">
-              <div className="space-y-1 text-sm mb-3">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex justify-between">
-                    <span>
-                      {item.quantity}× {item.menu_item?.name}
-                      {item.size ? ` (${item.size})` : ""}
-                    </span>
-                    <span className="text-muted-foreground">
-                      £{(item.unit_price * item.quantity).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <Separator className="mb-3" />
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <span className="font-bold text-lg">£{Number(order.total).toFixed(2)}</span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    onClick={() => handleCancel(order.id)}
-                    disabled={cancelOrder.isPending}
-                  >
-                    <XCircle className="h-4 w-4 mr-1" />
-                    Cancel
-                  </Button>
-                  {order.status === "ready" && (
-                    <Button size="sm" onClick={() => setPaymentOrder(order)}>
-                      <CreditCard className="h-4 w-4 mr-1" />
-                      Payment
+                <Separator className="mb-3" />
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-lg">£{Number(order.total).toFixed(2)}</span>
+                  <div className="flex gap-1.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive h-8 px-2"
+                      onClick={() => handleCancel(order.id)}
+                      disabled={cancelOrder.isPending}
+                    >
+                      <XCircle className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Cancel</span>
                     </Button>
-                  )}
+                    {order.status === "ready" && (
+                      <Button size="sm" className="h-8 px-2 sm:px-3" onClick={() => setPaymentOrder(order)}>
+                        <CreditCard className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Payment</span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       <PaymentDialog
