@@ -33,41 +33,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Listener for ONGOING auth changes (does NOT control loading)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (_event, newSession) => {
         if (!mounted) return;
-        console.log("[Auth] onAuthStateChange:", _event, !!session);
-        setSession(session);
-        setUser(session?.user ?? null);
+        console.log("[Auth] onAuthStateChange:", _event, !!newSession);
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
 
-        if (session?.user) {
-          // Use setTimeout to avoid Supabase auth deadlock
+        if (newSession?.user) {
+          // Set loading true while we fetch the role for new session
+          setLoading(true);
           setTimeout(() => {
             if (!mounted) return;
-            fetchRole(session.user.id).then((r) => {
-              if (mounted) setRole(r);
+            fetchRole(newSession.user.id).then((r) => {
+              if (mounted) {
+                setRole(r);
+                setLoading(false);
+              }
             }).catch(() => {
-              if (mounted) setRole(null);
+              if (mounted) {
+                setRole(null);
+                setLoading(false);
+              }
             });
           }, 0);
         } else {
           setRole(null);
+          setLoading(false);
         }
       }
     );
 
-    // INITIAL load — controls loading state
+    // INITIAL load
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
         if (!mounted) return;
-        console.log("[Auth] getSession:", !!session);
-        setSession(session);
-        setUser(session?.user ?? null);
+        console.log("[Auth] getSession:", !!existingSession);
+        setSession(existingSession);
+        setUser(existingSession?.user ?? null);
 
-        if (session?.user) {
-          const userRole = await fetchRole(session.user.id);
+        if (existingSession?.user) {
+          const userRole = await fetchRole(existingSession.user.id);
           if (mounted) setRole(userRole);
         }
       } catch (err) {
@@ -86,7 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) setLoading(false);
     return { error: error as Error | null };
   };
 
