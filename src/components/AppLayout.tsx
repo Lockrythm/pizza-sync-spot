@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Loader2,
   Users,
+  Sparkles,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
   { label: "Analytics", path: "/analytics", icon: <BarChart3 className="h-5 w-5" />, roles: ["admin"] },
   { label: "Users", path: "/users", icon: <Users className="h-5 w-5" />, roles: ["admin"] },
   { label: "Settings", path: "/settings", icon: <Settings className="h-5 w-5" />, roles: ["admin"] },
+  { label: "AI Assistant", path: "/ai", icon: <Sparkles className="h-5 w-5" />, roles: ["admin"] },
 ];
 
 function SidebarNav({ role, onNavigate }: { role: string; onNavigate?: () => void }) {

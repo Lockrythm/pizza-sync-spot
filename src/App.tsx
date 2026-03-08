@@ -14,6 +14,7 @@ import OrderHistory from "./pages/OrderHistory";
 import Analytics from "./pages/Analytics";
 import UserManagement from "./pages/UserManagement";
 import BusinessSettings from "./pages/BusinessSettings";
+import AIChat from "./pages/AIChat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/users" element={<UserManagement />} />
               <Route path="/settings" element={<BusinessSettings />} />
+              <Route path="/ai" element={<AIChat />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
