@@ -74,6 +74,7 @@ function useUsers() {
 }
 
 const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
+  super_admin: "default",
   admin: "default",
   cashier: "secondary",
   chef: "outline",
