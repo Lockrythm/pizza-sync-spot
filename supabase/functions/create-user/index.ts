@@ -48,7 +48,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, email, password, display_name, role, user_id, new_role } = body;
+    const { action, email, password, display_name, role, user_id, new_role, branch_ids } = body;
 
     // DELETE USER
     if (action === "delete" && user_id) {
