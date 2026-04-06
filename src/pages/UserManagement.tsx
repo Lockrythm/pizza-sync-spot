@@ -279,6 +279,7 @@ function EditRoleForm({ user, onSubmit, isPending }: { user: UserRow; onSubmit: 
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="super_admin">Super Admin</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="cashier">Cashier</SelectItem>
             <SelectItem value="chef">Chef</SelectItem>
