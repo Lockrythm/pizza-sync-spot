@@ -14,50 +14,103 @@ export type Database = {
   }
   public: {
     Tables: {
+      branches: {
+        Row: {
+          address: string | null
+          city: string | null
+          contact: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          contact?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          contact?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       business_settings: {
         Row: {
+          branch_id: string | null
           id: string
           key: string
           updated_at: string
           value: string
         }
         Insert: {
+          branch_id?: string | null
           id?: string
           key: string
           updated_at?: string
           value: string
         }
         Update: {
+          branch_id?: string | null
           id?: string
           key?: string
           updated_at?: string
           value?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_settings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
+          branch_id: string | null
           created_at: string
           id: string
           name: string
           sort_order: number
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           id?: string
           name: string
           sort_order?: number
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           id?: string
           name?: string
           sort_order?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       menu_items: {
         Row: {
+          branch_id: string | null
           category_id: string
           cost_price: number
           created_at: string
@@ -73,6 +126,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branch_id?: string | null
           category_id: string
           cost_price?: number
           created_at?: string
@@ -88,6 +142,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branch_id?: string | null
           category_id?: string
           cost_price?: number
           created_at?: string
@@ -103,6 +158,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "menu_items_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "menu_items_category_id_fkey"
             columns: ["category_id"]
@@ -211,6 +273,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          branch_id: string | null
           created_at: string
           created_by: string
           discount_amount: number
@@ -229,6 +292,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           created_by: string
           discount_amount?: number
@@ -247,6 +311,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           created_by?: string
           discount_amount?: number
@@ -264,49 +329,79 @@ export type Database = {
           total?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pizza_addons: {
         Row: {
+          branch_id: string | null
           created_at: string
           id: string
           name: string
           price: number
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           id?: string
           name: string
           price?: number
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           id?: string
           name?: string
           price?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pizza_addons_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pizza_crusts: {
         Row: {
+          branch_id: string | null
           created_at: string
           extra_price: number
           id: string
           name: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           extra_price?: number
           id?: string
           name: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           extra_price?: number
           id?: string
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pizza_crusts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -331,6 +426,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_branches: {
+        Row: {
+          branch_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_branches_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -367,7 +491,7 @@ export type Database = {
       is_chef: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "cashier" | "chef"
+      app_role: "admin" | "cashier" | "chef" | "super_admin"
       order_status: "new" | "preparing" | "ready" | "completed" | "cancelled"
       order_type: "dine_in" | "takeaway" | "delivery"
       payment_method: "cash" | "card"
@@ -498,7 +622,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "cashier", "chef"],
+      app_role: ["admin", "cashier", "chef", "super_admin"],
       order_status: ["new", "preparing", "ready", "completed", "cancelled"],
       order_type: ["dine_in", "takeaway", "delivery"],
       payment_method: ["cash", "card"],
