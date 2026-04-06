@@ -489,6 +489,8 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_cashier: { Args: never; Returns: boolean }
       is_chef: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
+      user_in_branch: { Args: { _branch_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "cashier" | "chef" | "super_admin"
