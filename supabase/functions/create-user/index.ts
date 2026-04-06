@@ -130,6 +130,16 @@ serve(async (req) => {
       });
     }
 
+    // Assign to branches if provided
+    if (branch_ids && Array.isArray(branch_ids) && branch_ids.length > 0) {
+      const { error: branchError } = await supabaseAdmin
+        .from("user_branches")
+        .insert(branch_ids.map((bid: string) => ({ user_id: newUser.user.id, branch_id: bid })));
+      if (branchError) {
+        console.error("Branch assignment error:", branchError.message);
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, user_id: newUser.user.id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
