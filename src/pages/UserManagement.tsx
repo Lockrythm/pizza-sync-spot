@@ -348,6 +348,7 @@ function CreateUserForm({ onSuccess }: { onSuccess: () => void }) {
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="cashier">Cashier</SelectItem>
             <SelectItem value="chef">Chef</SelectItem>
           </SelectContent>
