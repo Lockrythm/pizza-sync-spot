@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { BranchProvider } from "@/contexts/BranchContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import Login from "./pages/Login";
 import AppLayout from "./components/AppLayout";
@@ -14,6 +15,7 @@ import OrderHistory from "./pages/OrderHistory";
 import Analytics from "./pages/Analytics";
 import UserManagement from "./pages/UserManagement";
 import BusinessSettings from "./pages/BusinessSettings";
+import BranchManagement from "./pages/BranchManagement";
 import AIChat from "./pages/AIChat";
 import NotFound from "./pages/NotFound";
 
@@ -33,21 +35,24 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<RoleRedirect />} />
-              <Route path="/orders" element={<Orders />} />
-              <Route path="/kitchen" element={<Kitchen />} />
-              <Route path="/menu" element={<MenuManagement />} />
-              <Route path="/history" element={<OrderHistory />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/users" element={<UserManagement />} />
-              <Route path="/settings" element={<BusinessSettings />} />
-              <Route path="/ai" element={<AIChat />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <BranchProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<RoleRedirect />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/kitchen" element={<Kitchen />} />
+                <Route path="/menu" element={<MenuManagement />} />
+                <Route path="/history" element={<OrderHistory />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/users" element={<UserManagement />} />
+                <Route path="/settings" element={<BusinessSettings />} />
+                <Route path="/branches" element={<BranchManagement />} />
+                <Route path="/ai" element={<AIChat />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BranchProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

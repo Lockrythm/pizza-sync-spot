@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranch } from "@/contexts/BranchContext";
 import type { Database } from "@/integrations/supabase/types";
 
 type OrderStatus = Database["public"]["Enums"]["order_status"];
@@ -21,6 +22,7 @@ export interface ActiveOrder {
   special_notes: string | null;
   created_at: string;
   paid_at: string | null;
+  branch_id: string | null;
   items: {
     id: string;
     quantity: number;
@@ -35,16 +37,18 @@ export interface ActiveOrder {
 
 export function useActiveOrders() {
   const qc = useQueryClient();
+  const { activeBranchId, isSuperAdmin } = useBranch();
+  const isAll = isSuperAdmin && activeBranchId === "all";
 
   const query = useQuery({
-    queryKey: ["active_orders"],
+    queryKey: ["active_orders", activeBranchId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("orders")
         .select(`
           id, order_number, order_type, table_number, status, subtotal,
           tax_percent, tax_amount, discount_amount, total, payment_method,
-          special_notes, created_at, paid_at,
+          special_notes, created_at, paid_at, branch_id,
           order_items (
             id, quantity, unit_price, size, special_instructions,
             menu_items:menu_item_id ( name ),
@@ -55,6 +59,9 @@ export function useActiveOrders() {
         .in("status", ["new", "preparing", "ready"])
         .order("created_at", { ascending: false });
 
+      if (!isAll && activeBranchId) q = q.eq("branch_id", activeBranchId);
+
+      const { data, error } = await q;
       if (error) throw error;
 
       return (data ?? []).map((o: any) => ({
@@ -76,7 +83,6 @@ export function useActiveOrders() {
     },
   });
 
-  // Realtime
   useEffect(() => {
     const channel = supabase
       .channel("active-orders")
@@ -94,17 +100,9 @@ export function useCompleteOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      id,
-      paymentMethod,
-      discountAmount,
-      total,
-      taxAmount,
+      id, paymentMethod, discountAmount, total, taxAmount,
     }: {
-      id: string;
-      paymentMethod: PaymentMethod;
-      discountAmount: number;
-      total: number;
-      taxAmount: number;
+      id: string; paymentMethod: PaymentMethod; discountAmount: number; total: number; taxAmount: number;
     }) => {
       const { data, error } = await supabase
         .from("orders")

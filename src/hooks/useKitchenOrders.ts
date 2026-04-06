@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranch } from "@/contexts/BranchContext";
 import type { Database } from "@/integrations/supabase/types";
 
 type OrderStatus = Database["public"]["Enums"]["order_status"];
@@ -26,11 +27,13 @@ export interface KitchenOrder {
 
 export function useKitchenOrders() {
   const qc = useQueryClient();
+  const { activeBranchId, isSuperAdmin } = useBranch();
+  const isAll = isSuperAdmin && activeBranchId === "all";
 
   const query = useQuery({
-    queryKey: ["kitchen_orders"],
+    queryKey: ["kitchen_orders", activeBranchId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("orders")
         .select(`
           id, order_number, order_type, table_number, status, special_notes, created_at,
@@ -44,6 +47,9 @@ export function useKitchenOrders() {
         .in("status", ["new", "preparing", "ready"])
         .order("created_at", { ascending: true });
 
+      if (!isAll && activeBranchId) q = q.eq("branch_id", activeBranchId);
+
+      const { data, error } = await q;
       if (error) throw error;
 
       return (data ?? []).map((o: any) => ({
@@ -61,29 +67,17 @@ export function useKitchenOrders() {
     },
   });
 
-  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel("kitchen-orders")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["kitchen_orders"] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "order_items" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["kitchen_orders"] });
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        qc.invalidateQueries({ queryKey: ["kitchen_orders"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => {
+        qc.invalidateQueries({ queryKey: ["kitchen_orders"] });
+      })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [qc]);
 
   return query;

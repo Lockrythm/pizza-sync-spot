@@ -13,10 +13,12 @@ import {
   Loader2,
   Users,
   Sparkles,
+  Building2,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import BranchSwitcher from "@/components/BranchSwitcher";
 
 interface NavItem {
   label: string;
@@ -26,14 +28,15 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Orders", path: "/orders", icon: <ShoppingCart className="h-5 w-5" />, roles: ["admin", "cashier"] },
-  { label: "Kitchen", path: "/kitchen", icon: <ChefHat className="h-5 w-5" />, roles: ["admin", "chef"] },
-  { label: "Menu", path: "/menu", icon: <Pizza className="h-5 w-5" />, roles: ["admin"] },
-  { label: "History", path: "/history", icon: <ClipboardList className="h-5 w-5" />, roles: ["admin", "cashier"] },
-  { label: "Analytics", path: "/analytics", icon: <BarChart3 className="h-5 w-5" />, roles: ["admin"] },
-  { label: "Users", path: "/users", icon: <Users className="h-5 w-5" />, roles: ["admin"] },
-  { label: "Settings", path: "/settings", icon: <Settings className="h-5 w-5" />, roles: ["admin"] },
-  { label: "AI Assistant", path: "/ai", icon: <Sparkles className="h-5 w-5" />, roles: ["admin"] },
+  { label: "Orders", path: "/orders", icon: <ShoppingCart className="h-5 w-5" />, roles: ["super_admin", "admin", "cashier"] },
+  { label: "Kitchen", path: "/kitchen", icon: <ChefHat className="h-5 w-5" />, roles: ["super_admin", "admin", "chef"] },
+  { label: "Menu", path: "/menu", icon: <Pizza className="h-5 w-5" />, roles: ["super_admin", "admin"] },
+  { label: "History", path: "/history", icon: <ClipboardList className="h-5 w-5" />, roles: ["super_admin", "admin", "cashier"] },
+  { label: "Analytics", path: "/analytics", icon: <BarChart3 className="h-5 w-5" />, roles: ["super_admin", "admin"] },
+  { label: "Users", path: "/users", icon: <Users className="h-5 w-5" />, roles: ["super_admin", "admin"] },
+  { label: "Branches", path: "/branches", icon: <Building2 className="h-5 w-5" />, roles: ["super_admin"] },
+  { label: "Settings", path: "/settings", icon: <Settings className="h-5 w-5" />, roles: ["super_admin", "admin"] },
+  { label: "AI Assistant", path: "/ai", icon: <Sparkles className="h-5 w-5" />, roles: ["super_admin", "admin"] },
 ];
 
 function SidebarNav({ role, onNavigate }: { role: string; onNavigate?: () => void }) {
@@ -49,10 +52,14 @@ function SidebarNav({ role, onNavigate }: { role: string; onNavigate?: () => voi
         </div>
         <div>
           <h1 className="text-base font-bold text-sidebar-foreground">LiveSync POS</h1>
-          <p className="text-xs text-sidebar-foreground/60 capitalize">{role}</p>
+          <p className="text-xs text-sidebar-foreground/60 capitalize">{role === "super_admin" ? "Super Admin" : role}</p>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
+
+      {/* Branch Switcher */}
+      <BranchSwitcher />
+
+      <nav className="flex-1 space-y-1 px-3 py-4 overflow-auto">
         {filtered.map((item) => {
           const active = location.pathname.startsWith(item.path);
           return (
