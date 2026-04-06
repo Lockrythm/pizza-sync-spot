@@ -40,7 +40,7 @@ serve(async (req) => {
       .eq("user_id", caller.id)
       .single();
 
-    if (callerRole?.role !== "admin") {
+    if (callerRole?.role !== "admin" && callerRole?.role !== "super_admin") {
       return new Response(JSON.stringify({ error: "Admin access required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -48,7 +48,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, email, password, display_name, role, user_id, new_role } = body;
+    const { action, email, password, display_name, role, user_id, new_role, branch_ids } = body;
 
     // DELETE USER
     if (action === "delete" && user_id) {
@@ -128,6 +128,16 @@ serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Assign to branches if provided
+    if (branch_ids && Array.isArray(branch_ids) && branch_ids.length > 0) {
+      const { error: branchError } = await supabaseAdmin
+        .from("user_branches")
+        .insert(branch_ids.map((bid: string) => ({ user_id: newUser.user.id, branch_id: bid })));
+      if (branchError) {
+        console.error("Branch assignment error:", branchError.message);
+      }
     }
 
     return new Response(

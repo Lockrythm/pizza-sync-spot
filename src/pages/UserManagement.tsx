@@ -74,6 +74,7 @@ function useUsers() {
 }
 
 const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
+  super_admin: "default",
   admin: "default",
   cashier: "secondary",
   chef: "outline",
@@ -278,6 +279,7 @@ function EditRoleForm({ user, onSubmit, isPending }: { user: UserRow; onSubmit: 
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="super_admin">Super Admin</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="cashier">Cashier</SelectItem>
             <SelectItem value="chef">Chef</SelectItem>
@@ -346,6 +348,7 @@ function CreateUserForm({ onSuccess }: { onSuccess: () => void }) {
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="cashier">Cashier</SelectItem>
             <SelectItem value="chef">Chef</SelectItem>
           </SelectContent>

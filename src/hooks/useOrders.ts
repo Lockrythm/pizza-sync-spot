@@ -1,17 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranch } from "@/contexts/BranchContext";
 import type { Database } from "@/integrations/supabase/types";
 
 type OrderType = Database["public"]["Enums"]["order_type"];
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
 
 export interface CartItem {
-  id: string; // temp client id
+  id: string;
   menuItemId: string;
   name: string;
   quantity: number;
   unitPrice: number;
-  size: string | null; // S/M/L for pizza
+  size: string | null;
   crustId: string | null;
   crustName: string | null;
   crustExtra: number;
@@ -31,6 +32,7 @@ export interface CreateOrderPayload {
 
 export function useCreateOrder() {
   const qc = useQueryClient();
+  const { activeBranchId } = useBranch();
 
   return useMutation({
     mutationFn: async (payload: CreateOrderPayload) => {
@@ -45,7 +47,6 @@ export function useCreateOrder() {
       const taxAmount = Math.round(subtotal * payload.taxPercent) / 100;
       const total = subtotal + taxAmount - payload.discountAmount;
 
-      // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -59,13 +60,13 @@ export function useCreateOrder() {
           discount_amount: payload.discountAmount,
           total,
           status: "new",
+          branch_id: activeBranchId === "all" ? undefined : activeBranchId,
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // Create order items
       for (const item of payload.items) {
         const linePrice = item.unitPrice + item.crustExtra + item.addons.reduce((a, ad) => a + ad.price, 0);
 
@@ -85,7 +86,6 @@ export function useCreateOrder() {
 
         if (itemError) throw itemError;
 
-        // Create addons
         if (item.addons.length > 0) {
           const { error: addonError } = await supabase
             .from("order_item_addons")

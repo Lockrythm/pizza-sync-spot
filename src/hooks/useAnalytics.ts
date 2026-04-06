@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, format } from "date-fns";
+import { useBranch } from "@/contexts/BranchContext";
+import { startOfDay, endOfDay, format } from "date-fns";
 
 export interface AnalyticsFilters {
   from: Date;
@@ -15,6 +16,7 @@ interface OrderRow {
   status: string;
   order_type: string;
   payment_method: string | null;
+  branch_id: string | null;
 }
 
 interface OrderItemRow {
@@ -25,21 +27,26 @@ interface OrderItemRow {
 }
 
 export function useAnalytics(filters: AnalyticsFilters) {
+  const { activeBranchId, isSuperAdmin } = useBranch();
+  const isAll = isSuperAdmin && activeBranchId === "all";
+
   return useQuery({
-    queryKey: ["analytics", filters.from.toISOString(), filters.to.toISOString()],
+    queryKey: ["analytics", filters.from.toISOString(), filters.to.toISOString(), activeBranchId],
     queryFn: async () => {
       const fromISO = startOfDay(filters.from).toISOString();
       const toISO = endOfDay(filters.to).toISOString();
 
-      // Fetch completed orders in range
-      const { data: orders, error: oErr } = await supabase
+      let q = supabase
         .from("orders")
-        .select("id, total, subtotal, created_at, status, order_type, payment_method")
+        .select("id, total, subtotal, created_at, status, order_type, payment_method, branch_id")
         .eq("status", "completed")
         .gte("created_at", fromISO)
         .lte("created_at", toISO)
         .order("created_at", { ascending: true });
 
+      if (!isAll && activeBranchId) q = q.eq("branch_id", activeBranchId);
+
+      const { data: orders, error: oErr } = await q;
       if (oErr) throw oErr;
 
       const orderIds = (orders ?? []).map((o) => o.id);
@@ -64,7 +71,6 @@ function buildAnalytics(orders: OrderRow[], items: OrderItemRow[]) {
   const totalOrders = orders.length;
   const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
 
-  // Profit
   let totalRevenue = 0;
   let totalCost = 0;
   const itemSales: Record<string, { name: string; qty: number; revenue: number; cost: number; isPizza: boolean }> = {};
@@ -88,13 +94,10 @@ function buildAnalytics(orders: OrderRow[], items: OrderItemRow[]) {
   }
 
   const totalProfit = totalRevenue - totalCost;
-
-  // Top items
   const sortedByQty = Object.values(itemSales).sort((a, b) => b.qty - a.qty);
   const topPizza = sortedByQty.find((i) => i.isPizza) ?? null;
   const mostProfitable = Object.values(itemSales).sort((a, b) => (b.revenue - b.cost) - (a.revenue - a.cost))[0] ?? null;
 
-  // Daily sales (for bar chart)
   const dailyMap: Record<string, number> = {};
   for (const o of orders) {
     const day = format(new Date(o.created_at), "yyyy-MM-dd");
@@ -102,7 +105,6 @@ function buildAnalytics(orders: OrderRow[], items: OrderItemRow[]) {
   }
   const dailySales = Object.entries(dailyMap).map(([date, sales]) => ({ date, sales: Math.round(sales * 100) / 100 }));
 
-  // Hourly distribution
   const hourlyMap: Record<number, number> = {};
   for (const o of orders) {
     const hour = new Date(o.created_at).getHours();
@@ -113,7 +115,6 @@ function buildAnalytics(orders: OrderRow[], items: OrderItemRow[]) {
     sales: Math.round((hourlyMap[h] ?? 0) * 100) / 100,
   }));
 
-  // Best-selling pizzas (pie chart)
   const pizzaItems = Object.values(itemSales)
     .filter((i) => i.isPizza)
     .sort((a, b) => b.qty - a.qty)
