@@ -40,7 +40,7 @@ serve(async (req) => {
       .eq("user_id", caller.id)
       .single();
 
-    if (callerRole?.role !== "admin") {
+    if (callerRole?.role !== "admin" && callerRole?.role !== "super_admin") {
       return new Response(JSON.stringify({ error: "Admin access required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
