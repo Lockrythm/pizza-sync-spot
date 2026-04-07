@@ -178,7 +178,7 @@ export default function OrderHistory() {
                 {selectedOrder.order_items?.map((item: any) => (
                   <div key={item.id} className="flex justify-between">
                     <span>{item.quantity}× {item.menu_items?.name ?? "Item"} {item.size ? `(${item.size})` : ""}</span>
-                    {role === "admin" && <span>£{(Number(item.unit_price) * item.quantity).toFixed(2)}</span>}
+                    {(role === "admin" || role === "super_admin") && <span>£{(Number(item.unit_price) * item.quantity).toFixed(2)}</span>}
                   </div>
                 ))}
               </div>
