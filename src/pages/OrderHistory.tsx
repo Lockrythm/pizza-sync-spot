@@ -120,8 +120,8 @@ export default function OrderHistory() {
                         {order.status}
                       </Badge>
                     </TableCell>
-                    {role === "admin" && <TableCell className="hidden md:table-cell">{order.payment_method ?? "—"}</TableCell>}
-                    {role === "admin" && <TableCell className="text-right font-medium hidden sm:table-cell">£{Number(order.total).toFixed(2)}</TableCell>}
+                    {(role === "admin" || role === "super_admin") && <TableCell className="hidden md:table-cell">{order.payment_method ?? "—"}</TableCell>}
+                    {(role === "admin" || role === "super_admin") && <TableCell className="text-right font-medium hidden sm:table-cell">£{Number(order.total).toFixed(2)}</TableCell>}
                     <TableCell>
                       <Button variant="ghost" size="sm"><Search className="h-4 w-4" /></Button>
                     </TableCell>
