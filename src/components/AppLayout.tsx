@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useBranch } from "@/contexts/BranchContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Navigate, Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -96,11 +97,12 @@ function SidebarNav({ role, onNavigate }: { role: string; onNavigate?: () => voi
 }
 
 export default function AppLayout() {
-  const { session, role, loading } = useAuth();
+  const { session, role, loading: authLoading } = useAuth();
+  const { loading: branchLoading } = useBranch();
   const [mobileOpen, setMobileOpen] = useState(false);
   useNotifications();
 
-  if (loading) {
+  if (authLoading || branchLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

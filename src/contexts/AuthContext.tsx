@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,43 +30,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return (data?.role as AppRole) ?? null;
   };
 
+  const initialisedRef = useRef(false);
+
   useEffect(() => {
     let mounted = true;
-    let initialised = false;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        if (!mounted) return;
-        // Skip the first INITIAL_SESSION event — handled by initializeAuth
-        if (!initialised && _event === "INITIAL_SESSION") return;
-        console.log("[Auth] onAuthStateChange:", _event, !!newSession);
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-
-        if (newSession?.user) {
-          setLoading(true);
-          setTimeout(() => {
-            if (!mounted) return;
-            fetchRole(newSession.user.id).then((r) => {
-              if (mounted) {
-                setRole(r);
-                setLoading(false);
-              }
-            }).catch(() => {
-              if (mounted) {
-                setRole(null);
-                setLoading(false);
-              }
-            });
-          }, 0);
-        } else {
-          setRole(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    // INITIAL load
+    // INITIAL load — runs first, sets the flag when done
     const initializeAuth = async () => {
       try {
         const { data: { session: existingSession } } = await supabase.auth.getSession();
@@ -84,10 +53,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } finally {
         if (mounted) {
           setLoading(false);
-          initialised = true;
+          initialisedRef.current = true;
         }
       }
     };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        if (!mounted) return;
+        // Skip events until initializeAuth has finished
+        if (!initialisedRef.current) return;
+
+        console.log("[Auth] onAuthStateChange:", _event, !!newSession);
+
+        if (_event === "SIGNED_OUT") {
+          setSession(null);
+          setUser(null);
+          setRole(null);
+          setLoading(false);
+          return;
+        }
+
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+
+        if (newSession?.user) {
+          setLoading(true);
+          fetchRole(newSession.user.id).then((r) => {
+            if (mounted) { setRole(r); setLoading(false); }
+          }).catch(() => {
+            if (mounted) { setRole(null); setLoading(false); }
+          });
+        } else {
+          setRole(null);
+          setLoading(false);
+        }
+      }
+    );
 
     initializeAuth();
 

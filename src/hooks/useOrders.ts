@@ -36,6 +36,10 @@ export function useCreateOrder() {
 
   return useMutation({
     mutationFn: async (payload: CreateOrderPayload) => {
+      if (!activeBranchId || activeBranchId === "all") {
+        throw new Error("Please select a specific branch before creating an order");
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
@@ -60,7 +64,7 @@ export function useCreateOrder() {
           discount_amount: payload.discountAmount,
           total,
           status: "new",
-          branch_id: activeBranchId === "all" ? undefined : activeBranchId,
+          branch_id: activeBranchId,
         })
         .select()
         .single();
