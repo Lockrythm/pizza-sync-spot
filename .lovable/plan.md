@@ -1,84 +1,55 @@
 
 
-# LiveSync Pizza POS — Implementation Plan
+## Plan: Fix Bugs and Sidebar Issues
 
-## Overview
-A cloud-based, real-time Pizza Shop POS system with multi-device sync, kitchen display, billing, dual printing, analytics, and role-based access. Currency: **GBP (£)**. Uses **Supabase** for backend (database, auth, real-time sync).
+### Bugs Identified
 
----
+1. **`is_admin()` SQL function excludes Super Admins** — The `is_admin()` helper only checks for `role = 'admin'`, meaning Super Admins cannot create/update/delete menu items, categories, crusts, addons, order items, business settings, or user roles. This is the most critical bug.
 
-## Phase 1: Foundation & Authentication
-- **Supabase Cloud setup** — database, auth, real-time subscriptions
-- **Login system** with role-based access: **Admin**, **Cashier**, **Chef**
-- Role stored in a secure `user_roles` table
-- Admin can create/manage user accounts
-- Session timeout after inactivity
+2. **Role checks in OrderHistory UI** — `role === "admin"` excludes `super_admin` from seeing payment method, total, and financial details in order history and detail dialogs.
 
----
+3. **Notifications hook placement** — `useNotifications()` is called inside `RoleRedirect` which unmounts immediately on redirect, killing the notification subscription.
 
-## Phase 2: Menu Management
-- **Categories**: Pizza, Sandwiches/Burgers, Sides, Drinks (admin can add more)
-- **Pizza-specific options**: 3 sizes (S/M/L), 5 crust types, 8 add-ons
-- Each item has: name, category, selling price (per size for pizza), cost price, enabled/disabled toggle
-- Admin panel to add, edit, delete, enable/disable menu items
-- Preloaded with 15 classic pizzas from the PRD
+4. **Auth race condition** — Both `onAuthStateChange` and `initializeAuth` run simultaneously and can overwrite each other's role state, occasionally showing "No role assigned."
 
----
+### Changes
 
-## Phase 3: Order Creation & Management
-- **Fast order entry screen** for Cashier — tap items, select size/crust/add-ons, add special notes per item
-- **Order types**: Dine-in (with table 1–20), Takeaway, Delivery
-- **Order statuses**: New → Preparing → Ready → Completed / Cancelled
-- Table management: assign, merge, transfer tables
-- Special instructions per item (free text: "No onions", "Extra spicy")
+**1. Database Migration — Fix `is_admin()` function**
+Update `is_admin()` to also return `true` for `super_admin` role:
+```sql
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')
+  )
+$$;
+```
+This single change fixes all RLS policies for menu, categories, crusts, addons, orders, order_items, business_settings, and user_roles.
 
----
+**2. Fix role checks in frontend pages**
+- `OrderHistory.tsx`: Change `role === "admin"` to `role === "admin" || role === "super_admin"` (4 occurrences)
+- Any other page with hardcoded `role === "admin"` checks
 
-## Phase 4: Real-Time Kitchen Display
-- **Kitchen screen** — shows incoming orders instantly via Supabase Realtime
-- Displays: order number, items, quantities, special notes, order time — **no prices**
-- Chef can tap to mark orders as "Preparing" → "Ready"
-- All status changes sync to all devices within 1 second
-- Orders auto-appear when cashier creates them — **no need to walk to the kitchen**
+**3. Move `useNotifications` to `AppLayout`**
+- Remove from `RoleRedirect` in `App.tsx`
+- Add to `AppLayout` component so it persists while the user is logged in
 
----
+**4. Fix Auth race condition in `AuthContext.tsx`**
+- Prevent `onAuthStateChange` from overwriting the role resolved by `initializeAuth` during initial load
+- Use a flag to skip the first `onAuthStateChange` event (which duplicates `getSession`)
 
-## Phase 5: Billing & Payments
-- Auto-calculated subtotal, configurable tax %, discount (fixed or %)
-- Payment methods: Cash, Card
-- Full invoice/receipt with: business name, address, contact, order number, date/time, itemized list, subtotal, tax, discount, total, payment method
-- Cashier marks order as "Completed" after payment
+**5. Sidebar mobile improvements**
+- Ensure the mobile hamburger menu Sheet closes properly after navigation
+- Verify sidebar renders correctly at 360px viewport
 
----
-
-## Phase 6: Dual Printing (Browser Print)
-- **Counter receipt** — full customer receipt with pricing (browser print dialog)
-- **Kitchen slip** — order number, items, quantities, notes, time — **no pricing**
-- Auto-trigger: kitchen slip on order creation, customer receipt on payment
-- Print preview formatted for receipt-style layout
-
----
-
-## Phase 7: Analytics & Profit Dashboard (Admin Only)
-- **Dashboard cards**: today's sales, today's orders, monthly sales, monthly profit, top pizza, average order value
-- **Charts**: daily sales bar chart (7 days), monthly revenue line chart, best-selling pizza pie chart, hourly sales bar chart
-- **Profit tracking**: profit per item (selling - cost price), most profitable item, daily/monthly profit totals
-- Date range filters for all reports
-- **CSV export** for sales data
-
----
-
-## Phase 8: Record Keeping & Search
-- All orders, items, payments, status changes stored persistently
-- Search by date range, order number
-- Filter by payment method, order type
-- Full order history accessible to Admin, limited view for Cashier
-
----
-
-## Key Technical Approach
-- **Supabase Realtime** for instant multi-device sync (no page refresh needed)
-- **Role-based RLS policies** so Chef never sees pricing, Cashier can't access admin features
-- **Responsive design** — works on laptops and tablets
-- All data in GBP (£)
+### Files to Edit
+- **New migration SQL** — update `is_admin()` function
+- `src/pages/OrderHistory.tsx` — fix role checks
+- `src/App.tsx` — move useNotifications
+- `src/components/AppLayout.tsx` — add useNotifications here
+- `src/contexts/AuthContext.tsx` — fix race condition
 
