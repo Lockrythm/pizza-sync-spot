@@ -82,7 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error("[Auth] initializeAuth error:", err);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          initialised = true;
+        }
       }
     };
 
