@@ -97,8 +97,8 @@ export default function OrderHistory() {
                 <TableHead className="hidden sm:table-cell">Date</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
-                {role === "admin" && <TableHead className="hidden md:table-cell">Payment</TableHead>}
-                {role === "admin" && <TableHead className="text-right hidden sm:table-cell">Total</TableHead>}
+                {(role === "admin" || role === "super_admin") && <TableHead className="hidden md:table-cell">Payment</TableHead>}
+                {(role === "admin" || role === "super_admin") && <TableHead className="text-right hidden sm:table-cell">Total</TableHead>}
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
