@@ -1,55 +1,50 @@
 
 
-## Plan: Fix Bugs and Sidebar Issues
+## Plan: Fix Issues and Ensure Super Admin Full Access
 
-### Bugs Identified
+### Problems Identified
 
-1. **`is_admin()` SQL function excludes Super Admins** — The `is_admin()` helper only checks for `role = 'admin'`, meaning Super Admins cannot create/update/delete menu items, categories, crusts, addons, order items, business settings, or user roles. This is the most critical bug.
+1. **Auth loading flicker / "No role assigned"**: The `BranchContext` depends on `role` from `AuthContext`, but both run effects simultaneously. When `BranchContext` starts fetching before `AuthContext` resolves the role, `isSuperAdmin` is false, causing wrong branch data. Also, the `onAuthStateChange` listener can fire a `TOKEN_REFRESHED` event during initial load before `initialised` is set to `true`, racing with `initializeAuth`.
 
-2. **Role checks in OrderHistory UI** — `role === "admin"` excludes `super_admin` from seeing payment method, total, and financial details in order history and detail dialogs.
+2. **`BranchContext` loading not gated in `AppLayout`**: The `AppLayout` only checks `AuthContext.loading` but not `BranchContext.loading`. If branch data hasn't loaded yet, hooks that depend on `activeBranchId` fire with `null`, returning empty data.
 
-3. **Notifications hook placement** — `useNotifications()` is called inside `RoleRedirect` which unmounts immediately on redirect, killing the notification subscription.
+3. **Super Admin should have full control**: Super Admin needs access to all pages and all operations. The sidebar nav and RLS are correct, but the route-level access isn't guarded — any role can navigate to any route via URL. Need to add route guards.
 
-4. **Auth race condition** — Both `onAuthStateChange` and `initializeAuth` run simultaneously and can overwrite each other's role state, occasionally showing "No role assigned."
+4. **`useCreateOrder` uses `activeBranchId === "all"` → `undefined`**: When super admin has "All Branches" selected and tries to create an order, `branch_id` becomes `undefined` which will fail or create orphaned orders.
 
 ### Changes
 
-**1. Database Migration — Fix `is_admin()` function**
-Update `is_admin()` to also return `true` for `super_admin` role:
-```sql
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean
-LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')
-  )
-$$;
-```
-This single change fixes all RLS policies for menu, categories, crusts, addons, orders, order_items, business_settings, and user_roles.
+**1. Fix AuthContext race condition (src/contexts/AuthContext.tsx)**
+- Use a ref for `initialised` instead of a closure variable so it's shared reliably
+- Ensure `onAuthStateChange` waits for `initializeAuth` to complete before processing events
+- On `SIGNED_OUT`, clear role immediately
 
-**2. Fix role checks in frontend pages**
-- `OrderHistory.tsx`: Change `role === "admin"` to `role === "admin" || role === "super_admin"` (4 occurrences)
-- Any other page with hardcoded `role === "admin"` checks
+**2. Gate AppLayout on BranchContext loading (src/components/AppLayout.tsx)**
+- Import `useBranch` and check `branchLoading` alongside `authLoading`
+- Show spinner until both auth and branch context are ready
 
-**3. Move `useNotifications` to `AppLayout`**
-- Remove from `RoleRedirect` in `App.tsx`
-- Add to `AppLayout` component so it persists while the user is logged in
+**3. Add route guards for role-based access (src/App.tsx)**
+- Wrap routes with a guard component that checks if the current role has access
+- Chef can only access `/kitchen`, cashier can access `/orders`, `/kitchen`, `/history`
+- Super admin and admin can access everything
+- Redirect unauthorized access to the user's default page
 
-**4. Fix Auth race condition in `AuthContext.tsx`**
-- Prevent `onAuthStateChange` from overwriting the role resolved by `initializeAuth` during initial load
-- Use a flag to skip the first `onAuthStateChange` event (which duplicates `getSession`)
+**4. Fix "All Branches" edge cases**
+- In `useCreateOrder`: if `activeBranchId` is `"all"`, show an error toast requiring branch selection before creating orders
+- In `BranchSwitcher`: when super admin selects "All Branches", disable order creation in the Orders page
 
-**5. Sidebar mobile improvements**
-- Ensure the mobile hamburger menu Sheet closes properly after navigation
-- Verify sidebar renders correctly at 360px viewport
+**5. Ensure super admin equivalence to admin everywhere**
+- Already fixed in previous migration (`is_admin()` includes `super_admin`)
+- `OrderHistory.tsx` already updated with `role === "admin" || role === "super_admin"`
+- No remaining frontend exclusions found
 
 ### Files to Edit
-- **New migration SQL** — update `is_admin()` function
-- `src/pages/OrderHistory.tsx` — fix role checks
-- `src/App.tsx` — move useNotifications
-- `src/components/AppLayout.tsx` — add useNotifications here
-- `src/contexts/AuthContext.tsx` — fix race condition
+- `src/contexts/AuthContext.tsx` — fix race condition with ref-based flag
+- `src/components/AppLayout.tsx` — gate on branch loading
+- `src/App.tsx` — add role-based route guards
+- `src/hooks/useOrders.ts` — guard against "all" branch for order creation
+- `src/pages/Orders.tsx` — show warning when "All Branches" is selected
+
+### No database migration needed
+All RLS functions already include super_admin properly.
 
