@@ -64,7 +64,7 @@ export function useCreateOrder() {
           discount_amount: payload.discountAmount,
           total,
           status: "new",
-          branch_id: activeBranchId === "all" ? undefined : activeBranchId,
+          branch_id: activeBranchId,
         })
         .select()
         .single();
