@@ -98,6 +98,7 @@ function SidebarNav({ role, onNavigate }: { role: string; onNavigate?: () => voi
 export default function AppLayout() {
   const { session, role, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  useNotifications();
 
   if (loading) {
     return (

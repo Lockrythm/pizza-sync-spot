@@ -183,7 +183,7 @@ export default function OrderHistory() {
                 ))}
               </div>
 
-              {role === "admin" && (
+              {(role === "admin" || role === "super_admin") && (
                 <div className="border-t pt-2 space-y-1">
                   <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>£{Number(selectedOrder.subtotal).toFixed(2)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>£{Number(selectedOrder.tax_amount).toFixed(2)}</span></div>

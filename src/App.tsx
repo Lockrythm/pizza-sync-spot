@@ -23,7 +23,6 @@ const queryClient = new QueryClient();
 
 function RoleRedirect() {
   const { role } = useAuth();
-  useNotifications();
   if (role === "chef") return <Navigate to="/kitchen" replace />;
   return <Navigate to="/orders" replace />;
 }
