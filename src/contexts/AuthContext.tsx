@@ -32,16 +32,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let initialised = false;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
         if (!mounted) return;
+        // Skip the first INITIAL_SESSION event — handled by initializeAuth
+        if (!initialised && _event === "INITIAL_SESSION") return;
         console.log("[Auth] onAuthStateChange:", _event, !!newSession);
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Set loading true while we fetch the role for new session
           setLoading(true);
           setTimeout(() => {
             if (!mounted) return;
@@ -80,7 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error("[Auth] initializeAuth error:", err);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          initialised = true;
+        }
       }
     };
 

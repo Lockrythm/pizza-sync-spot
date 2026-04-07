@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Navigate, Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,6 +98,7 @@ function SidebarNav({ role, onNavigate }: { role: string; onNavigate?: () => voi
 export default function AppLayout() {
   const { session, role, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  useNotifications();
 
   if (loading) {
     return (

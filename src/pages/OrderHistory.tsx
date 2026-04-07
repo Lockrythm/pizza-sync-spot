@@ -97,8 +97,8 @@ export default function OrderHistory() {
                 <TableHead className="hidden sm:table-cell">Date</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
-                {role === "admin" && <TableHead className="hidden md:table-cell">Payment</TableHead>}
-                {role === "admin" && <TableHead className="text-right hidden sm:table-cell">Total</TableHead>}
+                {(role === "admin" || role === "super_admin") && <TableHead className="hidden md:table-cell">Payment</TableHead>}
+                {(role === "admin" || role === "super_admin") && <TableHead className="text-right hidden sm:table-cell">Total</TableHead>}
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -120,8 +120,8 @@ export default function OrderHistory() {
                         {order.status}
                       </Badge>
                     </TableCell>
-                    {role === "admin" && <TableCell className="hidden md:table-cell">{order.payment_method ?? "—"}</TableCell>}
-                    {role === "admin" && <TableCell className="text-right font-medium hidden sm:table-cell">£{Number(order.total).toFixed(2)}</TableCell>}
+                    {(role === "admin" || role === "super_admin") && <TableCell className="hidden md:table-cell">{order.payment_method ?? "—"}</TableCell>}
+                    {(role === "admin" || role === "super_admin") && <TableCell className="text-right font-medium hidden sm:table-cell">£{Number(order.total).toFixed(2)}</TableCell>}
                     <TableCell>
                       <Button variant="ghost" size="sm"><Search className="h-4 w-4" /></Button>
                     </TableCell>
@@ -178,12 +178,12 @@ export default function OrderHistory() {
                 {selectedOrder.order_items?.map((item: any) => (
                   <div key={item.id} className="flex justify-between">
                     <span>{item.quantity}× {item.menu_items?.name ?? "Item"} {item.size ? `(${item.size})` : ""}</span>
-                    {role === "admin" && <span>£{(Number(item.unit_price) * item.quantity).toFixed(2)}</span>}
+                    {(role === "admin" || role === "super_admin") && <span>£{(Number(item.unit_price) * item.quantity).toFixed(2)}</span>}
                   </div>
                 ))}
               </div>
 
-              {role === "admin" && (
+              {(role === "admin" || role === "super_admin") && (
                 <div className="border-t pt-2 space-y-1">
                   <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>£{Number(selectedOrder.subtotal).toFixed(2)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>£{Number(selectedOrder.tax_amount).toFixed(2)}</span></div>
